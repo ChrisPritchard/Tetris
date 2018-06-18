@@ -29,6 +29,7 @@ let shapes = [
     ]
 ]
 
-let rec transpose = function
-    | (_::_)::_ as M -> List.map List.head M :: transpose (List.map List.tail M)
+let rec rotate = function
+    | (_::_)::_ as m -> 
+        (List.map List.head m |> List.rev)::(List.map List.tail m |> rotate) 
     | _ -> []
