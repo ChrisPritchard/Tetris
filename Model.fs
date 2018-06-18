@@ -33,3 +33,9 @@ let rec rotate = function
     | (_::_)::_ as m -> 
         (List.map List.head m |> List.rev)::(List.map List.tail m |> rotate) 
     | _ -> []
+
+let plot (tlx, tly) =
+    List.mapi (fun y -> 
+        List.mapi (fun x -> function
+        | X -> (x + tlx, y + tly) |> Some
+        | O -> None) >> List.choose id)
