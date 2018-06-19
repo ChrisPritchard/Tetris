@@ -1,6 +1,7 @@
 module Model
 
 let width,height = 10,20
+let startPos = (width / 2, 0)
 
 type ShapeBlock = | X | O
 
@@ -28,6 +29,10 @@ let shapes = [
         [X;X;X]
         [O;O;X]
     ]
+    [
+        [X;X;X]
+        [O;X;O]
+    ]
 ]
 
 let rec rotate = function
@@ -42,6 +47,7 @@ let plot (tlx, tly) =
         | O -> None) >> List.choose id) >> List.concat
 
 type World = {
+    score: int
     timeBetweenDrops: float
     staticBlocks: (int * int) list
     pos: int * int
@@ -64,3 +70,27 @@ let processCommand world command =
 
     if List.except world.staticBlocks newBlocks <> newBlocks then world
     else { world with shape = newShape; pos = (nx, ny) }
+
+let random = new System.Random ()
+
+let drop world = 
+    let (x, y) = world.pos
+    let newPos = (x, y + 1)
+
+    let newBlocks = plot newPos world.shape
+    if List.except world.staticBlocks newBlocks <> newBlocks then
+        let currentBlocks = plot world.pos world.shape
+        { world with 
+            staticBlocks = world.staticBlocks @ currentBlocks
+            pos = startPos
+            shape = shapes.[random.Next(shapes.Length)] }
+    else { world with pos = newPos }
+
+let fullLines world = 
+    world.staticBlocks 
+        |> List.groupBy snd 
+        |> List.filter (fun r -> List.length (snd r) = width)
+        |> List.map snd
+
+let removeLines lines world = 
+    { world with staticBlocks = List.except (List.concat lines) world.staticBlocks }
