@@ -49,6 +49,16 @@ let shapes = [
     ]
 ]
 
+let startModel = {
+    score = 0
+    timeBetweenDrops = 5.
+    staticBlocks = []
+    pos = startPos
+    shape = shapes.[random.Next(shapes.Length)]
+    nextShape = shapes.[random.Next(shapes.Length)]
+    event = None
+}
+
 let rec rotate = function
     | (_::_)::_ as m -> 
         (List.map List.head m |> List.rev)::(List.map List.tail m |> rotate) 

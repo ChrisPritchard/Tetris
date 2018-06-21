@@ -6,8 +6,26 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="Content\Miramo.spritefont" />
+    <None Include="Content\cursor.png" />
+    <None Include="Content\explosion.png" />
+    <None Include="Content\Miramo.ttf" />
+    <None Include="Content\white.png" />
+    <None Include="Content\Content.mgcb" />
+    <MonoGameContentReference Include="**\*.mgcb" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="GameCore.fs" />
     <Compile Include="Model.fs" />
+    <Compile Include="View.fs" />
+    <Compile Include="Controller.fs" />
     <Compile Include="Program.fs" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Content.Builder" Version="3.7.0.4" />
+    <PackageReference Include="MonoGame.Framework.DesktopGL.Core" Version="3.7.0.7" />
   </ItemGroup>
 
 </Project>
