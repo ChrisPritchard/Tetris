@@ -7,42 +7,43 @@ let random = new System.Random ()
 type World = {
     score: int
     timeBetweenDrops: float
-    staticBlocks: (int * int) list
+    staticBlocks: (Colour * int * int) list
     pos: int * int
-    shape: ShapeBlock list list
-    nextShape: ShapeBlock list list
+    shape: Colour * ShapeBlock list list
+    nextShape: Colour * ShapeBlock list list
     event: Event option
 } 
 and ShapeBlock = | X | O
+and Colour = | Red | Magenta | Yellow | Cyan | Blue | Silver | Green
 and Event = | Moved | Rotated | Dropped | Line
 
 type Command = | Left | Right | Rotate | Drop
 
 let shapes = [
-    [
+    Cyan, [
         [X;X]
         [X;X]
     ]
-    [
+    Red, [
         [X;X;X;X]
     ]
-    [
+    Green, [
         [X;X;O]
         [O;X;X]
     ]
-    [
+    Blue, [
         [O;X;X]
         [X;X;O]
     ]
-    [
+    Yellow, [
         [X;X;X]
         [X;O;O]
     ]
-    [
+    Magenta, [
         [X;X;X]
         [O;O;X]
     ]
-    [
+    Silver, [
         [X;X;X]
         [O;X;O]
     ]
@@ -69,11 +70,12 @@ let processCommand world command =
             | Some Right -> (x + 1, y)
             | Some Drop -> (x, y + 1)
             | _ -> (x, y)
-            
-        let newShape = if command = Some Rotate then rotate world.shape else world.shape
+        
+        let newShape = if command = Some Rotate then rotate <| snd world.shape else snd world.shape
         let newBlocks = plot (nx, ny) newShape
+        let worldBlocks = world.staticBlocks |> List.map (fun (_,x,y) -> x,y)
 
-        if List.except world.staticBlocks newBlocks <> newBlocks then 
+        if List.except worldBlocks newBlocks <> newBlocks then 
             world
         else
             let event = 
@@ -82,17 +84,21 @@ let processCommand world command =
                 | Some Left | Some Right -> Some Moved
                 | Some Drop -> Some Dropped
                 | _ -> None
-            { world with shape = newShape; pos = (nx, ny); event = event }
+            { world with shape = fst world.shape, newShape; pos = (nx, ny); event = event }
 
 let drop world = 
     let (x, y) = world.pos
     let newPos = (x, y + 1)
 
-    let newBlocks = plot newPos world.shape
-    if List.except world.staticBlocks newBlocks = newBlocks then 
+    let newBlocks = plot newPos <| snd world.shape
+    let worldBlocks = world.staticBlocks |> List.map (fun (_,x,y) -> x,y)
+
+    if List.except worldBlocks newBlocks = newBlocks then 
         { world with pos = newPos }
     else    
-        let currentBlocks = plot world.pos world.shape
+        let currentBlocks = 
+            plot world.pos (snd world.shape)
+            |> List.map (fun (x,y) -> fst world.shape, x, y)
         { world with 
             staticBlocks = world.staticBlocks @ currentBlocks
             pos = startPos
@@ -101,7 +107,7 @@ let drop world =
 
 let fullLines world = 
     world.staticBlocks 
-        |> List.groupBy snd 
+        |> List.groupBy (fun (_,_,y) -> y) 
         |> List.filter (fun r -> List.length (snd r) = width)
         |> List.map snd
 
