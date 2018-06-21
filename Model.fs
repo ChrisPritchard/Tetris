@@ -52,6 +52,7 @@ type World = {
     staticBlocks: (int * int) list
     pos: int * int
     shape: ShapeBlock list list
+    nextShape: ShapeBlock list list
 }
 
 type Commands = | None | Left | Right | Rotate | Drop
@@ -83,7 +84,8 @@ let drop world =
         { world with 
             staticBlocks = world.staticBlocks @ currentBlocks
             pos = startPos
-            shape = shapes.[random.Next(shapes.Length)] }
+            shape = world.nextShape
+            nextShape = shapes.[random.Next(shapes.Length)] }
     else { world with pos = newPos }
 
 let fullLines world = 
