@@ -1,9 +1,22 @@
 module Model
 
-let width,height = 10,20
+let width, height = 10, 20
 let startPos = (width / 2, 0)
+let random = new System.Random ()
 
-type ShapeBlock = | X | O
+type World = {
+    score: int
+    timeBetweenDrops: float
+    staticBlocks: (int * int) list
+    pos: int * int
+    shape: ShapeBlock list list
+    nextShape: ShapeBlock list list
+    event: Event option
+} 
+and ShapeBlock = | X | O
+and Event = | Moved | Rotated | Dropped | Line
+
+type Command = | Left | Right | Rotate | Drop
 
 let shapes = [
     [
@@ -46,47 +59,45 @@ let plot (tlx, tly) =
         | X -> (x + tlx, y + tly) |> Some
         | O -> None) >> List.choose id) >> List.concat
 
-type World = {
-    score: int
-    timeBetweenDrops: float
-    staticBlocks: (int * int) list
-    pos: int * int
-    shape: ShapeBlock list list
-    nextShape: ShapeBlock list list
-}
-
-type Commands = | None | Left | Right | Rotate | Drop
-
 let processCommand world command =
-    let (x, y) = world.pos
-    let (nx, ny) = 
-        match command with
-        | None | Rotate -> (x, y)
-        | Left -> (x - 1, y)
-        | Right -> (x + 1, y)
-        | Drop -> (x, y + 1)
-        
-    let newShape = if command = Rotate then rotate world.shape else world.shape
-    let newBlocks = plot (nx, ny) newShape
+    if command = None then world
+    else
+        let (x, y) = world.pos
+        let (nx, ny) = 
+            match command with
+            | Some Left -> (x - 1, y)
+            | Some Right -> (x + 1, y)
+            | Some Drop -> (x, y + 1)
+            | _ -> (x, y)
+            
+        let newShape = if command = Some Rotate then rotate world.shape else world.shape
+        let newBlocks = plot (nx, ny) newShape
 
-    if List.except world.staticBlocks newBlocks <> newBlocks then world
-    else { world with shape = newShape; pos = (nx, ny) }
-
-let random = new System.Random ()
+        if List.except world.staticBlocks newBlocks <> newBlocks then 
+            world
+        else
+            let event = 
+                match command with
+                | Some Rotate -> Some Rotated
+                | Some Left | Some Right -> Some Moved
+                | Some Drop -> Some Dropped
+                | _ -> None
+            { world with shape = newShape; pos = (nx, ny); event = event }
 
 let drop world = 
     let (x, y) = world.pos
     let newPos = (x, y + 1)
 
     let newBlocks = plot newPos world.shape
-    if List.except world.staticBlocks newBlocks <> newBlocks then
+    if List.except world.staticBlocks newBlocks = newBlocks then 
+        { world with pos = newPos }
+    else    
         let currentBlocks = plot world.pos world.shape
         { world with 
             staticBlocks = world.staticBlocks @ currentBlocks
             pos = startPos
             shape = world.nextShape
             nextShape = shapes.[random.Next(shapes.Length)] }
-    else { world with pos = newPos }
 
 let fullLines world = 
     world.staticBlocks 
