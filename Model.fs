@@ -85,9 +85,10 @@ let processCommand world command =
         
         let newShape = if command = Some Rotate then rotate <| snd world.shape else snd world.shape
         let newBlocks = plot (nx, ny) newShape
+        let outOfBounds = newBlocks |> List.exists (fun (x,y) -> x < 0 || x >= width || y < 0 || y >= height)
         let worldBlocks = world.staticBlocks |> List.map (fun (_,x,y) -> x,y)
 
-        if List.except worldBlocks newBlocks <> newBlocks then 
+        if outOfBounds || List.except worldBlocks newBlocks <> newBlocks then 
             world
         else
             let event = 
