@@ -6,7 +6,8 @@ let random = new System.Random ()
 
 type World = {
     score: int
-    timeBetweenDrops: float
+    gameTicks: int
+    ticksBetweenDrops: int
     staticBlocks: (Colour * int * int) list
     pos: int * int
     shape: Colour * ShapeBlock list list
@@ -51,7 +52,8 @@ let shapes = [
 
 let startModel = {
     score = 0
-    timeBetweenDrops = 5.
+    gameTicks = 0
+    ticksBetweenDrops = 5
     staticBlocks = []
     pos = startPos
     shape = shapes.[random.Next(shapes.Length)]
@@ -101,9 +103,10 @@ let drop world =
     let newPos = (x, y + 1)
 
     let newBlocks = plot newPos <| snd world.shape
+    let outOfBounds = newBlocks |> List.exists (fun (x,y) -> x < 0 || x >= width || y < 0 || y >= height)
     let worldBlocks = world.staticBlocks |> List.map (fun (_,x,y) -> x,y)
 
-    if List.except worldBlocks newBlocks = newBlocks then 
+    if not outOfBounds && List.except worldBlocks newBlocks = newBlocks then 
         { world with pos = newPos }
     else    
         let currentBlocks = 
