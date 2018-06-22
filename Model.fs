@@ -5,6 +5,7 @@ let startPos = (width / 2, 0)
 let random = new System.Random ()
 
 type World = {
+    state: State
     score: int
     gameTicks: int
     ticksBetweenDrops: int
@@ -14,6 +15,7 @@ type World = {
     nextShape: Colour * ShapeBlock list list
     event: Event option
 } 
+and State = | Playing | GameOver
 and ShapeBlock = | X | O
 and Colour = | Red | Magenta | Yellow | Cyan | Blue | Silver | Green
 and Event = | Moved | Rotated | Dropped | Line
@@ -51,6 +53,7 @@ let shapes = [
 ]
 
 let startModel = {
+    state = Playing
     score = 0
     gameTicks = 0
     ticksBetweenDrops = 5
@@ -110,10 +113,12 @@ let drop world =
     if not outOfBounds && List.except worldBlocks newBlocks = newBlocks then 
         { world with pos = newPos }
     else    
-        let currentBlocks = 
+        let currentBlocks =
             plot world.pos (snd world.shape)
             |> List.map (fun (x,y) -> fst world.shape, x, y)
+        let nextBlocks = plot startPos <| snd world.nextShape
         { world with 
+            state = if List.except worldBlocks nextBlocks <> nextBlocks then GameOver else Playing
             staticBlocks = world.staticBlocks @ currentBlocks
             pos = startPos
             shape = world.nextShape

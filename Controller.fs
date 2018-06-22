@@ -7,6 +7,7 @@ let gameTickTime = 200.
 let advanceGame (runState: RunState) gameModel = 
     match gameModel with
     | None -> Some startModel
+    | Some m when m.state = GameOver -> Some startModel
     | Some m ->
         let elapsedTicks = float m.gameTicks * gameTickTime
         if runState.elapsed - elapsedTicks < gameTickTime then gameModel
