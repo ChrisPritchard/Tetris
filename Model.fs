@@ -1,7 +1,7 @@
 module Model
 
 let width, height = 10, 20
-let startPos = (width / 2, 0)
+let startPos = (width / 2 - 1, 0)
 let random = new System.Random ()
 
 type World = {
