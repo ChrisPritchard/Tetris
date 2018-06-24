@@ -1,6 +1,7 @@
 module Controller
 open Model
 open GameCore
+open Microsoft.Xna.Framework.Input
 
 let gameTickTime = 200.
 
@@ -15,10 +16,19 @@ let advanceGame (runState: RunState) gameModel =
             let newTicks = m.gameTicks + 1
             let m = { m with gameTicks = newTicks }
             
-            // process actions
-            
+            let keyMap = 
+                function 
+                | Keys.Left -> Some Command.Left
+                | Keys.Right -> Some Command.Right
+                | Keys.Up -> Some Command.Rotate
+                | Keys.Down -> Some Command.Drop
+                | _ -> None
+            let command = 
+                List.map keyMap runState.keyboard.pressed |> List.tryPick id
+                
+            let m = processCommand m command
             let m = 
-                if newTicks % m.ticksBetweenDrops <> 0 then
+                if command <> None || newTicks % m.ticksBetweenDrops <> 0 then
                     m
                 else
                     drop m
