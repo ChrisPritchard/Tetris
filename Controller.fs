@@ -26,27 +26,25 @@ let advanceGame (runState: RunState) gameModel =
             let command = 
                 List.map keyMap runState.keyboard.pressed |> List.tryPick id
                 
-            let m = 
-                if m.currentPause > 0 then
-                    { m with currentPause = m.currentPause - 1 }
-                else if command <> None || newTicks % m.ticksBetweenDrops <> 0 then
-                    processCommand m command
+            if m.currentPause > 0 then
+                Some { m with currentPause = m.currentPause - 1 }
+            else if command <> None || newTicks % m.ticksBetweenDrops <> 0 then
+                processCommand m command |> Some
+            else
+                let dropped = drop m
+                let lines = fullLines dropped
+                if List.isEmpty lines then
+                    Some dropped
                 else
-                    let dropped = drop m
-                    let lines = fullLines dropped
-                    if List.isEmpty lines then
-                        dropped
+                    let withoutLines = removeLines lines dropped
+                    let newScore = dropped.score + List.length lines * scorePerLine
+                    if newScore % scorePerLevel = 0 then
+                        { withoutLines with 
+                            score = newScore
+                            level = m.level + 1
+                            currentPause = ticksForLinePause
+                            ticksBetweenDrops = max 1 (m.ticksBetweenDrops - 1) } |> Some
                     else
-                        let withoutLines = removeLines lines dropped
-                        let score = dropped.score + List.length lines * scorePerLine
-                        if score % scorePerLevel = 0 then
-                            { withoutLines with 
-                                score = score
-                                currentPause = m.ticksForLinePause
-                                ticksBetweenDrops = max 1 (m.ticksBetweenDrops - 1) }
-                        else
-                            { withoutLines with 
-                                score = score
-                                currentPause = m.ticksForLinePause }
-
-            Some m
+                        { withoutLines with 
+                            score = newScore
+                            currentPause = ticksForLinePause } |> Some

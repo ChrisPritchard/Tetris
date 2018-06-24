@@ -4,14 +4,15 @@ let width, height = 10, 20
 let startPos = (width / 2 - 1, 0)
 let scorePerLine = 100
 let scorePerLevel = 1000
+let ticksForLinePause = 20
 let random = new System.Random ()
 
 type World = {
     state: State
     score: int
+    level: int
     gameTicks: int
     ticksBetweenDrops: int
-    ticksForLinePause: int
     currentPause: int
     staticBlocks: (Colour * int * int) list
     pos: int * int
@@ -59,9 +60,9 @@ let shapes = [
 let startModel = {
     state = Playing
     score = 0
+    level = 1
     gameTicks = 0
     ticksBetweenDrops = 10
-    ticksForLinePause = 20
     currentPause = 0
     staticBlocks = []
     pos = startPos
