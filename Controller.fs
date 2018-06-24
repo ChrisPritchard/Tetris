@@ -8,6 +8,7 @@ let gameTickTime = 100.
 let advanceGame (runState: RunState) gameModel = 
     match gameModel with
     | None -> Some startModel
+    | Some _ when runState.WasJustPressed Keys.Escape -> None
     | Some m when m.state = GameOver -> Some { startModel with gameTicks = m.gameTicks }
     | Some m ->
         let elapsedTicks = float m.gameTicks * gameTickTime
