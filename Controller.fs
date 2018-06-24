@@ -3,7 +3,7 @@ open Model
 open GameCore
 open Microsoft.Xna.Framework.Input
 
-let gameTickTime = 200.
+let gameTickTime = 100.
 
 let advanceGame (runState: RunState) gameModel = 
     match gameModel with
@@ -26,13 +26,27 @@ let advanceGame (runState: RunState) gameModel =
             let command = 
                 List.map keyMap runState.keyboard.pressed |> List.tryPick id
                 
-            let m = processCommand m command
             let m = 
-                if command <> None || newTicks % m.ticksBetweenDrops <> 0 then
-                    m
+                if m.currentPause > 0 then
+                    { m with currentPause = m.currentPause - 1 }
+                else if command <> None || newTicks % m.ticksBetweenDrops <> 0 then
+                    processCommand m command
                 else
-                    drop m
-
-            // process lines
+                    let dropped = drop m
+                    let lines = fullLines dropped
+                    if List.isEmpty lines then
+                        dropped
+                    else
+                        let withoutLines = removeLines lines dropped
+                        let score = dropped.score + List.length lines * scorePerLine
+                        if score % scorePerLevel = 0 then
+                            { withoutLines with 
+                                score = score
+                                currentPause = m.ticksForLinePause
+                                ticksBetweenDrops = max 1 (m.ticksBetweenDrops - 1) }
+                        else
+                            { withoutLines with 
+                                score = score
+                                currentPause = m.ticksForLinePause }
 
             Some m

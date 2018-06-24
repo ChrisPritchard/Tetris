@@ -2,6 +2,8 @@ module Model
 
 let width, height = 10, 20
 let startPos = (width / 2 - 1, 0)
+let scorePerLine = 100
+let scorePerLevel = 1000
 let random = new System.Random ()
 
 type World = {
@@ -9,6 +11,8 @@ type World = {
     score: int
     gameTicks: int
     ticksBetweenDrops: int
+    ticksForLinePause: int
+    currentPause: int
     staticBlocks: (Colour * int * int) list
     pos: int * int
     shape: Colour * ShapeBlock list list
@@ -56,7 +60,9 @@ let startModel = {
     state = Playing
     score = 0
     gameTicks = 0
-    ticksBetweenDrops = 5
+    ticksBetweenDrops = 10
+    ticksForLinePause = 20
+    currentPause = 0
     staticBlocks = []
     pos = startPos
     shape = shapes.[random.Next(shapes.Length)]
