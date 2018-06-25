@@ -5,6 +5,42 @@ open Microsoft.Xna.Framework.Input
 
 let gameTickTime = 100.
 
+let keyMap = 
+    function 
+    | Keys.Left -> Some Command.Left
+    | Keys.Right -> Some Command.Right
+    | Keys.Up -> Some Command.Rotate
+    | Keys.Down -> Some Command.Drop
+    | _ -> None
+
+let getCommand runState = 
+    List.map keyMap runState.keyboard.pressed |> List.tryPick id
+
+type PhaseResult = | Stop of World | Continue of World 
+
+let pausePhase world = 
+    if world.currentPause > 0 then 
+        Stop { world with currentPause = world.currentPause - 1 } 
+    else Continue world
+
+let commandPhase runState world =
+    let command = getCommand runState
+    if command <> None || world.gameTicks % world.ticksBetweenDrops <> 0 then
+        Stop <| processCommand world command
+    else
+        Continue world
+
+let dropPhase world = 
+    Continue <| drop world
+
+let linePhase world = 
+    Continue <| removeLines world
+
+let (|=>) phase1 phase2action : PhaseResult =
+    match phase1 with
+    | Stop world -> Stop world
+    | Continue world -> phase2action world
+
 let advanceGame (runState: RunState) gameModel = 
     match gameModel with
     | None -> Some startModel
@@ -15,37 +51,7 @@ let advanceGame (runState: RunState) gameModel =
         if runState.elapsed - elapsedTicks < gameTickTime then gameModel
         else
             let newTicks = m.gameTicks + 1
-            let m = { m with gameTicks = newTicks }
-            
-            let keyMap = 
-                function 
-                | Keys.Left -> Some Command.Left
-                | Keys.Right -> Some Command.Right
-                | Keys.Up -> Some Command.Rotate
-                | Keys.Down -> Some Command.Drop
-                | _ -> None
-            let command = 
-                List.map keyMap runState.keyboard.pressed |> List.tryPick id
-                
-            if m.currentPause > 0 then
-                Some { m with currentPause = m.currentPause - 1 }
-            else if command <> None || newTicks % m.ticksBetweenDrops <> 0 then
-                processCommand m command |> Some
-            else
-                let dropped = drop m
-                let lines = fullLines dropped
-                if List.isEmpty lines then
-                    Some dropped
-                else
-                    let withoutLines = removeLines lines dropped
-                    let newScore = dropped.score + List.length lines * scorePerLine
-                    if newScore % scorePerLevel = 0 then
-                        { withoutLines with 
-                            score = newScore
-                            level = m.level + 1
-                            currentPause = ticksForLinePause
-                            ticksBetweenDrops = max 1 (m.ticksBetweenDrops - 1) } |> Some
-                    else
-                        { withoutLines with 
-                            score = newScore
-                            currentPause = ticksForLinePause } |> Some
+            let world = { m with gameTicks = newTicks }
+            world |>
+                pausePhase |=> commandPhase runState |=> dropPhase |=> linePhase
+                |> function | Stop result | Continue result -> Some result

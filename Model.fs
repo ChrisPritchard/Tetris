@@ -131,11 +131,18 @@ let drop world =
             shape = world.nextShape
             nextShape = shapes.[random.Next(shapes.Length)] }
 
-let fullLines world = 
-    world.staticBlocks 
-        |> List.groupBy (fun (_,_,y) -> y) 
-        |> List.filter (fun r -> List.length (snd r) = width)
-        |> List.map snd
 
-let removeLines lines world = 
-    { world with staticBlocks = List.except (List.concat lines) world.staticBlocks }
+
+let removeLines world = 
+    let lines = 
+        world.staticBlocks 
+            |> List.groupBy (fun (_,_,y) -> y) 
+            |> List.filter (fun r -> List.length (snd r) = width)
+            |> List.map snd
+    let newScore = List.length lines * scorePerLine
+    let newLevel = float newScore / float scorePerLevel |> floor |> int |> (+) 1
+    { world with 
+        staticBlocks = List.except (List.concat lines) world.staticBlocks
+        currentPause = if List.isEmpty lines then 0 else ticksForLinePause
+        score = newScore
+        level = newLevel }
