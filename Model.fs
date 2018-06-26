@@ -82,32 +82,30 @@ let plot (tlx, tly) =
         | X -> (x + tlx, y + tly) |> Some
         | O -> None) >> List.choose id) >> List.concat
 
-let processCommand world command =
-    if command = None then world
-    else
-        let (x, y) = world.pos
-        let (nx, ny) = 
-            match command with
-            | Some Left -> (x - 1, y)
-            | Some Right -> (x + 1, y)
-            | Some Drop -> (x, y + 1)
-            | _ -> (x, y)
-        
-        let newShape = if command = Some Rotate then rotate <| snd world.shape else snd world.shape
-        let newBlocks = plot (nx, ny) newShape
-        let outOfBounds = newBlocks |> List.exists (fun (x,y) -> x < 0 || x >= width || y < 0 || y >= height)
-        let worldBlocks = world.staticBlocks |> List.map (fun (_,x,y) -> x,y)
+let processCommand command world =
+    let (x, y) = world.pos
+    let (nx, ny) = 
+        match command with
+        | Some Left -> (x - 1, y)
+        | Some Right -> (x + 1, y)
+        | Some Drop -> (x, y + 1)
+        | _ -> (x, y)
+    
+    let newShape = if command = Some Rotate then rotate <| snd world.shape else snd world.shape
+    let newBlocks = plot (nx, ny) newShape
+    let outOfBounds = newBlocks |> List.exists (fun (x,y) -> x < 0 || x >= width || y < 0 || y >= height)
+    let worldBlocks = world.staticBlocks |> List.map (fun (_,x,y) -> x,y)
 
-        if outOfBounds || List.except worldBlocks newBlocks <> newBlocks then 
-            world
-        else
-            let event = 
-                match command with
-                | Some Rotate -> Some Rotated
-                | Some Left | Some Right -> Some Moved
-                | Some Drop -> Some Dropped
-                | _ -> None
-            { world with shape = fst world.shape, newShape; pos = (nx, ny); event = event }
+    if outOfBounds || List.except worldBlocks newBlocks <> newBlocks then 
+        None
+    else
+        let event = 
+            match command with
+            | Some Rotate -> Some Rotated
+            | Some Left | Some Right -> Some Moved
+            | Some Drop -> Some Dropped
+            | _ -> None
+        Some { world with shape = fst world.shape, newShape; pos = (nx, ny); event = event }
 
 let drop world = 
     let (x, y) = world.pos
@@ -152,9 +150,14 @@ let pausePhase world =
         Stop { world with currentPause = world.currentPause - 1 } 
     else Continue world
 
+let canDrop world = world.gameTicks % world.ticksBetweenDrops = 0
+
 let commandPhase command world =
-    if command <> None || world.gameTicks % world.ticksBetweenDrops <> 0 then
-        Stop <| processCommand world command
+    if command <> None || not <| canDrop world then
+        match processCommand command world with
+        | None when canDrop world -> Continue world
+        | None -> Stop world
+        | Some w -> Stop w
     else
         Continue world
 
