@@ -131,8 +131,6 @@ let drop world =
             shape = world.nextShape
             nextShape = shapes.[random.Next(shapes.Length)] }
 
-
-
 let removeLines world = 
     let lines = 
         world.staticBlocks 
@@ -146,3 +144,34 @@ let removeLines world =
         currentPause = if List.isEmpty lines then 0 else ticksForLinePause
         score = newScore
         level = newLevel }
+
+type PhaseResult = | Stop of World | Continue of World 
+
+let pausePhase world = 
+    if world.currentPause > 0 then 
+        Stop { world with currentPause = world.currentPause - 1 } 
+    else Continue world
+
+let commandPhase command world =
+    if command <> None || world.gameTicks % world.ticksBetweenDrops <> 0 then
+        Stop <| processCommand world command
+    else
+        Continue world
+
+let dropPhase world = 
+    Continue <| drop world
+
+let linePhase world = 
+    Continue <| removeLines world
+
+let finish = function | Stop result | Continue result -> result
+
+let (|=>) phase1result phase2action : PhaseResult =
+    match phase1result with
+    | Stop world -> Stop world
+    | Continue world -> phase2action world
+
+let processTick command world = 
+    world |>
+        pausePhase |=> commandPhase command |=> dropPhase |=> linePhase
+        |> finish
