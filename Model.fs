@@ -122,12 +122,14 @@ let drop world =
             plot world.pos (snd world.shape)
             |> List.map (fun (x,y) -> fst world.shape, x, y)
         let nextBlocks = plot startPos <| snd world.nextShape
+        let nextTicks = world.ticksBetweenDrops - (world.gameTicks % world.ticksBetweenDrops) - 1 |> (+) world.gameTicks
         { world with 
             state = if List.except worldBlocks nextBlocks <> nextBlocks then GameOver else Playing
             staticBlocks = world.staticBlocks @ currentBlocks
             pos = startPos
             shape = world.nextShape
-            nextShape = shapes.[random.Next(shapes.Length)] }
+            nextShape = shapes.[random.Next(shapes.Length)]
+            gameTicks = nextTicks }
 
 let removeLines world = 
     let lines = 

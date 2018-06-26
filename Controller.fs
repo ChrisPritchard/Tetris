@@ -3,7 +3,7 @@ open Model
 open GameCore
 open Microsoft.Xna.Framework.Input
 
-let gameTickTime = 100.
+let gameTickTime = 150.
 
 let keyMap = 
     function 
