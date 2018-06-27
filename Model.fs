@@ -182,7 +182,12 @@ let dropPhase world =
 
 let checkLinePhase world = 
     let lines = getLines world
-    Continue <| if List.isEmpty lines then world else { world with linesToRemove = Some lines; currentPause = ticksForLinePause}
+    if List.isEmpty lines then 
+        Continue world 
+    else 
+        { world with 
+            linesToRemove = Some lines
+            currentPause = ticksForLinePause } |> Continue
 
 let finish = function | Stop result | Continue result -> result
 
