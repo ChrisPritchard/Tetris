@@ -139,11 +139,19 @@ let getLines world =
         |> List.filter (fun r -> List.length (snd r) = width)
         |> List.collect snd 
 
+let getLevels lines = lines |> List.distinctBy (fun (_,_,y) -> y) |> List.map  (fun (_,_,y) -> y)
+
 let removeLines lines world = 
     let newScore = List.length lines * scorePerLine
     let newLevel = float newScore / float scorePerLevel |> floor |> int |> (+) 1
+    let levels = getLevels lines
+    let newBlocks = 
+        List.except lines world.staticBlocks
+        |> List.map (fun (c,x,y) -> 
+            let pos = y::levels |> List.sortByDescending id |> List.findIndex ((=) y)
+            c,x,(y + pos))
     { world with 
-        staticBlocks = List.except lines world.staticBlocks
+        staticBlocks = newBlocks
         score = newScore
         level = newLevel }
 

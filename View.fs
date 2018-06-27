@@ -38,7 +38,7 @@ let getView _ (model: World) =
         ColouredImage (Color.Gray, { assetKey = "blank"; destRect = nx, ny, nw, nh; sourceRect = None })
     ]
 
-    let lines = getLines model |> List.distinctBy (fun (_,_,y) -> y) |> List.map  (fun (_,_,y) -> y)
+    let lines = match model.linesToRemove with | Some lines -> getLevels lines | _ -> []
     let staticBlocks = 
         model.staticBlocks
         |> List.map (fun (c,x,y) ->
