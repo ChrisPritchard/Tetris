@@ -13,7 +13,11 @@ let keyMap =
     | Keys.Down -> Some Command.Drop
     | _ -> None
 
+let mutable pressedAndReleased: Keys list = []
+
 let advanceGame (runState: RunState) gameModel = 
+    if not <| List.isEmpty runState.keyboard.keysUp then
+        pressedAndReleased <- pressedAndReleased @ runState.keyboard.keysUp
     match gameModel with
     | None -> 
         Some startModel
@@ -26,6 +30,6 @@ let advanceGame (runState: RunState) gameModel =
         if runState.elapsed - elapsedTicks < gameTickTime then gameModel
         else
             let world = { m with gameTicks = m.gameTicks + 1 }
-            let pressedAndReleased = []
-            let commands = List.map keyMap pressedAndReleased |> List.choose id
+            let commands = List.map keyMap (pressedAndReleased @ runState.keyboard.pressed) |> List.choose id
+            pressedAndReleased <- []
             processTick commands world |> Some

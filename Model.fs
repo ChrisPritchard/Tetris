@@ -169,7 +169,7 @@ let commandPhase (commands: Command list) world =
     let canDrop world = world.gameTicks % world.ticksBetweenDrops = 0
     if commands <> [] || not <| canDrop world then
         let result = List.fold processCommand world commands
-        let hasChanged = result.shape = world.shape
+        let hasChanged = result.shape <> world.shape || result.pos <> world.pos
         match hasChanged with
         | false when canDrop world -> Continue world
         | false -> Stop world
