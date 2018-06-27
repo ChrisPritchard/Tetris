@@ -4,7 +4,7 @@ let width, height = 10, 20
 let startPos = (width / 2 - 1, 0)
 let scorePerLine = 100
 let scorePerLevel = 1000
-let ticksForLinePause = 20
+let ticksForLinePause = 10
 let random = new System.Random ()
 
 type World = {
@@ -14,6 +14,7 @@ type World = {
     gameTicks: int
     ticksBetweenDrops: int
     currentPause: int
+    linesToRemove: (Colour * int * int) list option
     staticBlocks: (Colour * int * int) list
     pos: int * int
     shape: Colour * ShapeBlock list list
@@ -64,6 +65,7 @@ let startModel = {
     gameTicks = 0
     ticksBetweenDrops = 10
     currentPause = 0
+    linesToRemove = None
     staticBlocks = []
     pos = startPos
     shape = shapes.[random.Next(shapes.Length)]
@@ -131,30 +133,33 @@ let drop world =
             nextShape = shapes.[random.Next(shapes.Length)]
             gameTicks = nextTicks }
 
-let removeLines world = 
-    let lines = 
-        world.staticBlocks 
-            |> List.groupBy (fun (_,_,y) -> y) 
-            |> List.filter (fun r -> List.length (snd r) = width)
-            |> List.map snd
+let getLines world = 
+    world.staticBlocks 
+        |> List.groupBy (fun (_,_,y) -> y) 
+        |> List.filter (fun r -> List.length (snd r) = width)
+        |> List.collect snd 
+
+let removeLines lines world = 
     let newScore = List.length lines * scorePerLine
     let newLevel = float newScore / float scorePerLevel |> floor |> int |> (+) 1
     { world with 
-        staticBlocks = List.except (List.concat lines) world.staticBlocks
-        currentPause = if List.isEmpty lines then 0 else ticksForLinePause
+        staticBlocks = List.except lines world.staticBlocks
         score = newScore
         level = newLevel }
 
 type PhaseResult = | Stop of World | Continue of World 
 
-let pausePhase world = 
+let removeLinePhase world = 
     if world.currentPause > 0 then 
         Stop { world with currentPause = world.currentPause - 1 } 
-    else Continue world
-
-let canDrop world = world.gameTicks % world.ticksBetweenDrops = 0
+    else
+        Continue <|
+            match world.linesToRemove with
+            | None -> world
+            | Some lines -> removeLines lines { world with linesToRemove = None }
 
 let commandPhase command world =
+    let canDrop world = world.gameTicks % world.ticksBetweenDrops = 0
     if command <> None || not <| canDrop world then
         match processCommand command world with
         | None when canDrop world -> Continue world
@@ -166,8 +171,9 @@ let commandPhase command world =
 let dropPhase world = 
     Continue <| drop world
 
-let linePhase world = 
-    Continue <| removeLines world
+let checkLinePhase world = 
+    let lines = getLines world
+    Continue <| if List.isEmpty lines then world else { world with linesToRemove = Some lines; currentPause = ticksForLinePause}
 
 let finish = function | Stop result | Continue result -> result
 
@@ -178,5 +184,5 @@ let (|=>) phase1result phase2action : PhaseResult =
 
 let processTick command world = 
     world |>
-        pausePhase |=> commandPhase command |=> dropPhase |=> linePhase
+        removeLinePhase |=> commandPhase command |=> dropPhase |=> checkLinePhase
         |> finish

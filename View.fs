@@ -38,16 +38,21 @@ let getView _ (model: World) =
         ColouredImage (Color.Gray, { assetKey = "blank"; destRect = nx, ny, nw, nh; sourceRect = None })
     ]
 
+    let lines = getLines model |> List.distinctBy (fun (_,_,y) -> y) |> List.map  (fun (_,_,y) -> y)
     let staticBlocks = 
         model.staticBlocks
         |> List.map (fun (c,x,y) ->
-            ColouredImage (colorFor c, { assetKey = "block"; destRect = posFor (x,y) (gx, gy); sourceRect = None }))
+            let color = if List.contains y lines then Color.White else colorFor c
+            ColouredImage (color, { assetKey = "block"; destRect = posFor (x,y) (gx, gy); sourceRect = None }))
 
     let colour = colorFor <| fst model.shape
     let currentShape = 
-        (plot (model.pos) <| snd model.shape)
-            |> List.map (fun (x,y) ->
-                ColouredImage (colour, { assetKey = "block"; destRect = posFor (x,y) (gx, gy); sourceRect = None }))
+        match model.linesToRemove with
+        | None ->
+            (plot (model.pos) <| snd model.shape)
+                |> List.map (fun (x,y) ->
+                    ColouredImage (colour, { assetKey = "block"; destRect = posFor (x,y) (gx, gy); sourceRect = None }))
+        | _ -> []
 
     let nextColour = colorFor <| fst model.nextShape
     let nextShape = 
