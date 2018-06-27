@@ -30,6 +30,7 @@ let advanceGame (runState: RunState) gameModel =
         if runState.elapsed - elapsedTicks < gameTickTime then gameModel
         else
             let world = { m with gameTicks = m.gameTicks + 1 }
-            let commands = List.map keyMap (pressedAndReleased @ runState.keyboard.pressed) |> List.choose id
+            let keys = pressedAndReleased @ (List.except pressedAndReleased runState.keyboard.pressed)
+            let commands = List.map keyMap keys |> List.choose id
             pressedAndReleased <- []
             processTick commands world |> Some
