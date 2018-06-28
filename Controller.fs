@@ -3,7 +3,7 @@ open Model
 open GameCore
 open Microsoft.Xna.Framework.Input
 
-let gameTickTime = 150.
+let gameTickTime = 100.
 
 let keyMap = 
     function 
@@ -13,11 +13,8 @@ let keyMap =
     | Keys.Down -> Some Command.Drop
     | _ -> None
 
-let mutable pressedAndReleased: Keys list = []
-
 let advanceGame (runState: RunState) gameModel = 
-    if not <| List.isEmpty runState.keyboard.keysUp then
-        pressedAndReleased <- pressedAndReleased @ runState.keyboard.keysUp
+    let newCommands = List.map keyMap runState.keyboard.keysUp |> List.choose id
     match gameModel with
     | None -> 
         Some startModel
@@ -27,10 +24,11 @@ let advanceGame (runState: RunState) gameModel =
         Some { startModel with gameTicks = m.gameTicks }
     | Some m ->
         let elapsedTicks = float m.gameTicks * gameTickTime
-        if runState.elapsed - elapsedTicks < gameTickTime then gameModel
+        if runState.elapsed - elapsedTicks < gameTickTime then 
+            Some { m with commandBuffer = m.commandBuffer @ newCommands }
         else
-            let world = { m with gameTicks = m.gameTicks + 1 }
-            let keys = pressedAndReleased @ (List.except pressedAndReleased runState.keyboard.pressed)
-            let commands = List.map keyMap keys |> List.choose id
-            pressedAndReleased <- []
+            let pressed = List.map keyMap runState.keyboard.pressed |> List.choose id
+            let commands = m.commandBuffer @ (pressed |> List.except [Rotate])
+
+            let world = { m with gameTicks = m.gameTicks + 1; commandBuffer = [] }
             processTick commands world |> Some

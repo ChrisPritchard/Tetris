@@ -9,12 +9,16 @@ let random = new System.Random ()
 
 type World = {
     state: State
+    
     score: int
     level: int
+
     gameTicks: int
     ticksBetweenDrops: int
     currentPause: int
     linesToRemove: (Colour * int * int) list option
+    commandBuffer: Command list
+
     staticBlocks: (Colour * int * int) list
     pos: int * int
     shape: Colour * ShapeBlock list list
@@ -25,8 +29,7 @@ and State = | Playing | GameOver
 and ShapeBlock = | X | O
 and Colour = | Red | Magenta | Yellow | Cyan | Blue | Silver | Green
 and Event = | Moved | Rotated | Dropped | Line
-
-type Command = | Left | Right | Rotate | Drop
+and Command = | Left | Right | Rotate | Drop
 
 let shapes = [
     Cyan, [
@@ -60,12 +63,16 @@ let shapes = [
 
 let startModel = {
     state = Playing
+
     score = 0
     level = 1
+
     gameTicks = 0
     ticksBetweenDrops = 10
     currentPause = 0
     linesToRemove = None
+    commandBuffer = []
+    
     staticBlocks = []
     pos = startPos
     shape = shapes.[random.Next(shapes.Length)]
