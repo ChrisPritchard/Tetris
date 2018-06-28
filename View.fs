@@ -4,7 +4,8 @@ open GameCore
 open Model
 open Microsoft.Xna.Framework
 
-let resolution = Windowed (400,600)
+let rw, rh = 400, 600
+let resolution = Windowed (rw, rh)
 
 let assetsToLoad = [
     Texture { key = "blank"; path = "Content/white" }
@@ -19,13 +20,14 @@ let gx, gy, gw, gh = 10, 10, 250, 500
 // Next block space
 let nx, ny, nw, nh = 270, 10, 120, 70
 
-let textScale = 1.
+let textScale = 0.5
+let textHeight = 20
 // Score text
-let sx, sy = nx + (nw / 2), ny + nh + 10
+let sx, sy = nx + (nw / 2), ny + nh + 20
 // Level text
-let lx, ly = sx, sy + 30
+let lx, ly = sx, sy + 60
 // Instruction text
-let ix, iy = lx, ly + 30
+let ix, iy = rw / 2, gy + gh + 30
 
 let colorFor colour = 
     match colour with
@@ -70,10 +72,17 @@ let getView _ (model: World) =
             |> List.map (fun (x,y) ->
                 ColouredImage (nextColour, { assetKey = "block"; destRect = posFor (x,y) (nx + nsow, ny + nsoh); sourceRect = None }))
 
+    let baseText = { assetKey = "default"; text = ""; position = (0, 0); origin = Centre; scale = textScale }
     let text = [
-        Text { assetKey = "default"; text = "Score"; position = (sx, sy); origin = Centre; scale = textScale }
-        Text { assetKey = "default"; text = "Level"; position = (lx, ly); origin = Centre; scale = textScale }
-        Text { assetKey = "default"; text = "Instructions"; position = (ix, iy); origin = Centre; scale = textScale }
+        Text { baseText with text = "Score"; position = (sx, sy) }
+        Text { baseText with text = string model.score; position = (sx, sy + textHeight) }
+        
+        Text { baseText with text = "Level"; position = (lx, ly) }
+        Text { baseText with text = string model.level; position = (lx, ly + textHeight) }
+
+        Text { baseText with text = "Instructions"; position = (ix, iy) }
+        Text { baseText with scale = 0.4; text = "left to move left, right to move right"; position = (ix, iy + textHeight) }
+        Text { baseText with scale = 0.4; text = "up to rotate, down to drop"; position = (ix, iy + textHeight + textHeight) }
     ]
 
     gameSpace @ nextBlockSpace @ staticBlocks @ currentShape @ nextShape @ text
