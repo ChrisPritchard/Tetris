@@ -4,12 +4,12 @@ let width, height = 10, 20
 let startPos = (width / 2 - 1, 0)
 let scorePerLine = 100
 let scorePerLevel = 1000
-let ticksForLinePause = 10
+let ticksForLinePause = 5
 let random = new System.Random ()
 
 type World = {
     state: State
-    
+
     score: int
     level: int
 
