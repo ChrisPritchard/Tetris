@@ -148,8 +148,8 @@ let getLines world =
 let getLevels lines = lines |> List.distinctBy (fun (_,_,y) -> y) |> List.map  (fun (_,_,y) -> y)
 
 let removeLines lines world = 
-    let newScore = List.length lines * scorePerLine
-    let newLevel = float newScore / float scorePerLevel |> floor |> int |> (+) 1
+    let newScore = List.length lines / width * scorePerLine
+    let newLevel = (float newScore / float scorePerLevel) |> floor |> int |> (+) 1
     let levels = getLevels lines
     let newBlocks = 
         List.except lines world.staticBlocks
