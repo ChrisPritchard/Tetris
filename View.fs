@@ -12,12 +12,12 @@ let assetsToLoad = [
     Font { key = "default"; path = "Content/coders_crux" }
 ]
 
+// Block size
+let bw, bh = 25, 25
 // Game space
 let gx, gy, gw, gh = 10, 10, 250, 500
 // Next block space
 let nx, ny, nw, nh = 270, 10, 120, 70
-// Block size
-let bw, bh = 25, 25
 
 let colorFor colour = 
     match colour with
@@ -55,9 +55,11 @@ let getView _ (model: World) =
         | _ -> []
 
     let nextColour = colorFor <| fst model.nextShape
+    let nsw, nsh = snd model.nextShape |> List.head |> List.length, snd model.nextShape |> List.length
+    let nsow, nsoh = (nw - (nsw * bw)) / 2, (nh - (nsh * bh)) / 2
     let nextShape = 
-        (plot (0, 0) <| snd model.nextShape)
+        plot (0, 0) <| snd model.nextShape
             |> List.map (fun (x,y) ->
-                ColouredImage (nextColour, { assetKey = "block"; destRect = posFor (x,y) (nx + 10, ny + 10); sourceRect = None }))
+                ColouredImage (nextColour, { assetKey = "block"; destRect = posFor (x,y) (nx + nsow, ny + nsoh); sourceRect = None }))
 
     gameSpace @ nextBlockSpace @ staticBlocks @ currentShape @ nextShape
