@@ -19,6 +19,14 @@ let gx, gy, gw, gh = 10, 10, 250, 500
 // Next block space
 let nx, ny, nw, nh = 270, 10, 120, 70
 
+let textScale = 1.
+// Score text
+let sx, sy = nx + (nw / 2), ny + nh + 10
+// Level text
+let lx, ly = sx, sy + 30
+// Instruction text
+let ix, iy = lx, ly + 30
+
 let colorFor colour = 
     match colour with
     | Red -> Color.Red | Magenta -> Color.Magenta | Yellow -> Color.Yellow 
@@ -62,4 +70,10 @@ let getView _ (model: World) =
             |> List.map (fun (x,y) ->
                 ColouredImage (nextColour, { assetKey = "block"; destRect = posFor (x,y) (nx + nsow, ny + nsoh); sourceRect = None }))
 
-    gameSpace @ nextBlockSpace @ staticBlocks @ currentShape @ nextShape
+    let text = [
+        Text { assetKey = "default"; text = "Score"; position = (sx, sy); origin = Centre; scale = textScale }
+        Text { assetKey = "default"; text = "Level"; position = (lx, ly); origin = Centre; scale = textScale }
+        Text { assetKey = "default"; text = "Instructions"; position = (ix, iy); origin = Centre; scale = textScale }
+    ]
+
+    gameSpace @ nextBlockSpace @ staticBlocks @ currentShape @ nextShape @ text
