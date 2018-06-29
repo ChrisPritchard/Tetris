@@ -14,7 +14,7 @@ let keyMap =
     | _ -> None
 
 let advanceGame (runState: RunState) gameModel = 
-    let newCommands = List.map keyMap runState.keyboard.keysUp |> List.choose id
+    let newCommands = List.map keyMap runState.keyboard.pressed |> List.choose id
     match gameModel with
     | None -> 
         Some startModel
@@ -27,8 +27,6 @@ let advanceGame (runState: RunState) gameModel =
         if runState.elapsed - elapsedTicks < gameTickTime then 
             Some { m with commandBuffer = m.commandBuffer @ newCommands }
         else
-            let pressed = List.map keyMap runState.keyboard.pressed |> List.choose id
-            let commands = m.commandBuffer @ (pressed |> List.except [Rotate])
-
+            let commands = m.commandBuffer |> List.distinct
             let world = { m with gameTicks = m.gameTicks + 1; commandBuffer = [] }
             processTick commands world |> Some
