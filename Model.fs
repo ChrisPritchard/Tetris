@@ -4,6 +4,10 @@ let width, height = 10, 20
 let startPos = (width / 2 - 1, 0)
 let scorePerLine = 100
 let scorePerLevel = 1000
+
+let timeBetweenCommands = 200.
+let minDropTime = 100.
+let levelAdjustOnDropTime = 100.
 let ticksForLinePause = 5
 let random = new System.Random ()
 
@@ -13,15 +17,14 @@ type World = {
     score: int
     level: int
 
-    gameTicks: int
-    ticksBetweenDrops: int
-    currentPause: int
+    lastCommandTime: float
+    lastDropTime: float
+    timeBetweenDrops: float
     linesToRemove: (Colour * int * int) list option
-    commandBuffer: Command list
 
     staticBlocks: (Colour * int * int) list
     pos: int * int
-    shape: Colour * ShapeBlock list list
+    shape: (Colour * ShapeBlock list list) option
     nextShape: Colour * ShapeBlock list list
     event: Event option
 } 
@@ -29,7 +32,7 @@ and State = | Playing | GameOver
 and ShapeBlock = | X | O
 and Colour = | Red | Magenta | Yellow | Cyan | Blue | Silver | Green
 and Event = | Moved | Rotated | Dropped | Line
-and Command = | Left | Right | Rotate | Drop
+and Command = | Left | Right | Rotate
 
 let shapes = [
     Cyan, [
@@ -61,22 +64,23 @@ let shapes = [
     ]
 ]
 
+let randomShape () = shapes.[random.Next(shapes.Length)]
+
 let startModel = {
     state = Playing
 
     score = 0
     level = 1
 
-    gameTicks = 0
-    ticksBetweenDrops = 10
-    currentPause = 0
+    lastCommandTime = 0.
+    lastDropTime = 0.
+    timeBetweenDrops = 500.
     linesToRemove = None
-    commandBuffer = []
     
     staticBlocks = []
     pos = startPos
-    shape = shapes.[random.Next(shapes.Length)]
-    nextShape = shapes.[random.Next(shapes.Length)]
+    shape = randomShape () |> Some
+    nextShape = randomShape ()
     event = None
 }
 
@@ -91,119 +95,92 @@ let plot (tlx, tly) =
         | X -> (x + tlx, y + tly) |> Some
         | O -> None) >> List.choose id) >> List.concat
 
-let processCommand world command =
-    let (x, y) = world.pos
-    let (nx, ny) = 
-        match command with
-        | Left -> (x - 1, y)
-        | Right -> (x + 1, y)
-        | Drop -> (x, y + 1)
-        | Rotate -> (x, y)
-    
-    let newShape = if command = Rotate then rotate <| snd world.shape else snd world.shape
-    let newBlocks = plot (nx, ny) newShape
-    let outOfBounds = newBlocks |> List.exists (fun (x,y) -> x < 0 || x >= width || y < 0 || y >= height)
-    let worldBlocks = world.staticBlocks |> List.map (fun (_,x,y) -> x,y)
+let isOutOfBounds blocks =
+    blocks |> List.exists (fun (x,y) -> x < 0 || x >= width || y < 0 || y >= height)
 
-    if outOfBounds || List.except worldBlocks newBlocks <> newBlocks then 
-        world
-    else
-        let event = 
+let isOverlapping world blocks =
+    let worldBlocks = world.staticBlocks |> List.map (fun (_,x,y) -> x,y)
+    List.except worldBlocks blocks <> blocks
+
+let processCommand world elapsed command =
+    match world.shape with
+    | None -> world
+    | Some _ when elapsed - world.lastCommandTime < timeBetweenCommands -> world
+    | Some (colour, blocks) ->
+        let (x, y) = world.pos
+        let (nx, ny) = 
             match command with
-            | Rotate -> Some Rotated
-            | Left | Right -> Some Moved
-            | Drop -> Some Dropped
-        { world with shape = fst world.shape, newShape; pos = (nx, ny); event = event }
+            | Left -> (x - 1, y)
+            | Right -> (x + 1, y)
+            | Rotate -> (x, y)
+        
+        let newShape = blocks |> match command with | Rotate -> rotate | _ -> id
+        let newBlocks = plot (nx, ny) newShape
+        
+        if isOutOfBounds newBlocks || isOverlapping world newBlocks then 
+            world
+        else
+            let event = 
+                match command with
+                | Rotate -> Some Rotated
+                | Left | Right -> Some Moved
+            { world with 
+                shape = Some (colour, newShape)
+                pos = (nx, ny)
+                event = event
+                lastCommandTime = elapsed }
 
-let drop world = 
-    let (x, y) = world.pos
-    let newPos = (x, y + 1)
+let drop world elapsed isDropKeyPressed = 
+    match world.shape with
+    | None -> world
+    | Some _ when 
+        let timeBetweenDrops = if isDropKeyPressed then world.timeBetweenDrops / 2. else world.timeBetweenDrops 
+        elapsed - world.lastDropTime < timeBetweenDrops -> world
+    | Some (colour, blocks) ->
+        let (x, y) = world.pos
+        let newPos = (x, y + 1)
 
-    let newBlocks = plot newPos <| snd world.shape
-    let outOfBounds = newBlocks |> List.exists (fun (x,y) -> x < 0 || x >= width || y < 0 || y >= height)
-    let worldBlocks = world.staticBlocks |> List.map (fun (_,x,y) -> x,y)
+        let newBlocks = plot newPos blocks
+        if not (isOutOfBounds newBlocks) && not (isOverlapping world newBlocks) then 
+            { world with pos = newPos; lastDropTime = elapsed }
+        else    
+            let currentBlocks = plot world.pos blocks |> List.map (fun (x,y) -> colour, x, y)
+            { world with staticBlocks = world.staticBlocks @ currentBlocks; shape = None }
 
-    if not outOfBounds && List.except worldBlocks newBlocks = newBlocks then 
-        { world with pos = newPos }
-    else    
-        let currentBlocks =
-            plot world.pos (snd world.shape)
-            |> List.map (fun (x,y) -> fst world.shape, x, y)
-        let nextBlocks = plot startPos <| snd world.nextShape
-        let nextTicks = world.ticksBetweenDrops - (world.gameTicks % world.ticksBetweenDrops) - 1 |> (+) world.gameTicks
-        { world with 
-            state = if List.except worldBlocks nextBlocks <> nextBlocks then GameOver else Playing
-            staticBlocks = world.staticBlocks @ currentBlocks
+let nextShape world =
+    match world.shape with
+    | Some _ -> world
+    | None ->
+        let nextBlocks = snd world.nextShape |> plot startPos
+        { world with
+            state = if isOverlapping world nextBlocks then GameOver else Playing
             pos = startPos
-            shape = world.nextShape
-            nextShape = shapes.[random.Next(shapes.Length)]
-            gameTicks = nextTicks }
-
+            shape = Some world.nextShape
+            nextShape = randomShape () }
+        
 let getLines world = 
     world.staticBlocks 
         |> List.groupBy (fun (_,_,y) -> y) 
         |> List.filter (fun r -> List.length (snd r) = width)
         |> List.collect snd 
 
-let getLevels lines = lines |> List.distinctBy (fun (_,_,y) -> y) |> List.map  (fun (_,_,y) -> y)
+let removeLines world = 
+    match world.linesToRemove with
+    | None -> world
+    | Some lines ->
+        let newScore = List.length lines / width * scorePerLine |> (+) world.score
+        let newLevel = float newScore / float scorePerLevel |> floor |> int |> (+) 1
+        
+        let horizontals = lines |> List.map  (fun (_,_,y) -> y) |> List.distinct
+        let newBlocks = 
+            List.except lines world.staticBlocks
+            |> List.map (fun (c, x, y) -> 
+                let adjust = y::horizontals |> List.sortByDescending id |> List.findIndex ((=) y)
+                c, x, (y + adjust))
+        let newDropTime = world.timeBetweenDrops - (float newLevel * levelAdjustOnDropTime) |> max minDropTime
 
-let removeLines lines world = 
-    let newScore = List.length lines / width * scorePerLine
-    let newLevel = (float newScore / float scorePerLevel) |> floor |> int |> (+) 1
-    let levels = getLevels lines
-    let newBlocks = 
-        List.except lines world.staticBlocks
-        |> List.map (fun (c,x,y) -> 
-            let pos = y::levels |> List.sortByDescending id |> List.findIndex ((=) y)
-            c,x,(y + pos))
-    { world with 
-        staticBlocks = newBlocks
-        score = newScore
-        level = newLevel }
-
-type PhaseResult = | Stop of World | Continue of World 
-
-let removeLinePhase world = 
-    if world.currentPause > 0 then 
-        Stop { world with currentPause = world.currentPause - 1 } 
-    else
-        Continue <|
-            match world.linesToRemove with
-            | None -> world
-            | Some lines -> removeLines lines { world with linesToRemove = None }
-
-let commandPhase (commands: Command list) world =
-    let canDrop world = world.gameTicks % world.ticksBetweenDrops = 0
-    if commands <> [] || not <| canDrop world then
-        let result = List.fold processCommand world commands
-        let hasChanged = result.shape <> world.shape || result.pos <> world.pos
-        match hasChanged with
-        | false when canDrop world -> Continue world
-        | false -> Stop world
-        | _ -> Stop result
-    else
-        Continue world
-
-let dropPhase world = 
-    Continue <| drop world
-
-let checkLinePhase world = 
-    let lines = getLines world
-    if List.isEmpty lines then 
-        Continue world 
-    else 
         { world with 
-            linesToRemove = Some lines
-            currentPause = ticksForLinePause } |> Continue
-
-let finish = function | Stop result | Continue result -> result
-
-let (|=>) phase1result phase2action : PhaseResult =
-    match phase1result with
-    | Stop world -> Stop world
-    | Continue world -> phase2action world
-
-let processTick commands world = 
-    world |>
-        removeLinePhase |=> commandPhase commands |=> dropPhase |=> checkLinePhase
-        |> finish
+            staticBlocks = newBlocks
+            score = newScore
+            level = newLevel
+            timeBetweenDrops = newDropTime }
