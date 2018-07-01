@@ -32,11 +32,12 @@ type DrawTextInfo = {
     scale: float
 }
 
-type Drawable = 
+type ViewArtifact = 
 | Image of DrawImageInfo
 | ColouredImage of Color * DrawImageInfo
 | Text of DrawTextInfo
 | ColouredText of Color * DrawTextInfo
+| SoundEffect of string
 
 type Resolution =
 | Windowed of int * int
@@ -73,7 +74,7 @@ type GameLoop<'TModel> (resolution, assetsToLoad, updateModel, getView)
 
     let mutable keyboardInfo = { pressed = []; keysDown = []; keysUp = [] }
     let mutable currentModel: 'TModel option = None
-    let mutable currentView: Drawable list * string list = [],[]
+    let mutable currentView: ViewArtifact list = []
 
     let mutable spriteBatch = Unchecked.defaultof<SpriteBatch>
 
@@ -148,8 +149,8 @@ type GameLoop<'TModel> (resolution, assetsToLoad, updateModel, getView)
         spriteBatch <- new SpriteBatch(this.GraphicsDevice)
         assets <- 
             assetsToLoad
-            |> List.map (fun a ->
-                match a with
+            |> List.map (
+                function
                 | Texture info -> info.key, this.Content.Load<Texture2D>(info.path) |> TextureAsset
                 | Font info -> info.key, this.Content.Load<SpriteFont>(info.path) |> FontAsset
                 | Sound info -> info.key, this.Content.Load<SoundEffect>(info.path) |> SoundAsset)
@@ -175,13 +176,13 @@ type GameLoop<'TModel> (resolution, assetsToLoad, updateModel, getView)
         
         spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp)
 
-        fst currentView
-            |> List.iter (fun drawable -> 
-                match drawable with 
+        currentView
+            |> List.iter (
+                function 
                 | Image i -> drawImage spriteBatch i Color.White
                 | ColouredImage (c,i) -> drawImage spriteBatch i c
                 | Text t -> drawText spriteBatch t Color.Black
-                | ColouredText (c,t) -> drawText spriteBatch t c)
-        snd currentView |> List.iter playSound
+                | ColouredText (c,t) -> drawText spriteBatch t c
+                | SoundEffect s -> playSound s)
 
         spriteBatch.End()

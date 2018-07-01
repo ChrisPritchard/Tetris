@@ -104,7 +104,6 @@ let getView _ (model: World) =
         Text { baseText with scale = 0.4; text = "up to rotate, down to drop"; position = (ix, iy + textHeight + textHeight) }
     ]
 
-    gameSpace @ nextBlockSpace @ staticBlocks @ currentShape @ nextShape @ text,
-    match model.event with
-    | Some e -> [eventSoundMap e]
-    | _ -> []
+    let sounds = match model.event with | Some e -> [eventSoundMap e |> SoundEffect] | _ -> []
+
+    gameSpace @ nextBlockSpace @ staticBlocks @ currentShape @ nextShape @ text @ sounds
