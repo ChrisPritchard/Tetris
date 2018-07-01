@@ -4,6 +4,7 @@ open Microsoft.Xna.Framework
 open Microsoft.Xna.Framework.Graphics;
 open Microsoft.Xna.Framework.Input;
 open System
+open Microsoft.Xna.Framework.Audio
 
 type KeyPath = {
     key: string
@@ -13,6 +14,7 @@ type KeyPath = {
 type Loadable =
 | Texture of KeyPath
 | Font of KeyPath
+| Sound of KeyPath
 
 type Origin = | TopLeft | Centre
 
@@ -43,11 +45,13 @@ type Resolution =
 type private Content =
 | TextureAsset of Texture2D
 | FontAsset of SpriteFont
+| SoundAsset of SoundEffect
 
 type RunState = {
     elapsed: float
     keyboard: KeyboardInfo
     mouse: MouseInfo
+    playSound: string -> unit
 } and KeyboardInfo = {
     pressed: Keys list;
     keysDown: Keys list;
@@ -133,6 +137,14 @@ type GameLoop<'TModel> (resolution, assetsToLoad, updateModel, getView)
             font, text.text, position, colour, 
             0.0f, Vector2.Zero, float32 text.scale, SpriteEffects.None, 0.5f)
 
+    let playSound assetKey =
+        let sound = 
+            match Map.tryFind assetKey assets with
+            | Some (SoundAsset s) -> s
+            | None -> sprintf "Missing asset: %s" assetKey |> failwith
+            | _ -> sprintf "Asset was not a SoundEffect: %s" assetKey |> failwith
+        sound.Play () |> ignore
+
     override __.LoadContent() = 
         spriteBatch <- new SpriteBatch(this.GraphicsDevice)
         assets <- 
@@ -140,7 +152,8 @@ type GameLoop<'TModel> (resolution, assetsToLoad, updateModel, getView)
             |> List.map (fun a ->
                 match a with
                 | Texture info -> info.key, this.Content.Load<Texture2D>(info.path) |> TextureAsset
-                | Font info -> info.key, this.Content.Load<SpriteFont>(info.path) |> FontAsset)
+                | Font info -> info.key, this.Content.Load<SpriteFont>(info.path) |> FontAsset
+                | Sound info -> info.key, this.Content.Load<SoundEffect>(info.path) |> SoundAsset)
             |> Map.ofList
 
     override __.Update(gameTime) =
@@ -150,6 +163,7 @@ type GameLoop<'TModel> (resolution, assetsToLoad, updateModel, getView)
             elapsed = gameTime.TotalGameTime.TotalMilliseconds 
             keyboard = keyboardInfo
             mouse = mouseInfo
+            playSound = playSound
         }
         
         currentModel <- updateModel runState currentModel

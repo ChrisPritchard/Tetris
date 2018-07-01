@@ -193,10 +193,10 @@ let removeLines world =
 
 let advanceGame elapsed command isDropPressed world =
     if elapsed - world.lastLineTime < timeBetweenLines then 
-        world
+        { world with event = None }
     else
         let result =
-            world 
+            { world with event = None } 
             |> removeLines
             |> nextShape
             |> processCommand elapsed command
