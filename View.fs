@@ -48,20 +48,22 @@ let getView _ (model: World) =
         ColouredImage (Color.Gray, { assetKey = "blank"; destRect = nx, ny, nw, nh; sourceRect = None })
     ]
 
-    let lines = match model.linesToRemove with | Some lines -> getLevels lines | _ -> []
+    let lines = 
+        match model.linesToRemove with 
+        | Some lines -> lines |> List.map (fun (_,_,y) -> y) 
+        | _ -> []
     let staticBlocks = 
         model.staticBlocks
         |> List.map (fun (c,x,y) ->
             let color = if List.contains y lines then Color.White else colorFor c
             ColouredImage (color, { assetKey = "block"; destRect = posFor (x,y) (gx, gy); sourceRect = None }))
 
-    let colour = colorFor <| fst model.shape
     let currentShape = 
-        match model.linesToRemove with
-        | None ->
-            (plot (model.pos) <| snd model.shape)
+        match model.shape with
+        | Some (colour, blocks) ->
+            plot model.pos blocks
                 |> List.map (fun (x,y) ->
-                    ColouredImage (colour, { assetKey = "block"; destRect = posFor (x,y) (gx, gy); sourceRect = None }))
+                    ColouredImage (colorFor colour, { assetKey = "block"; destRect = posFor (x,y) (gx, gy); sourceRect = None }))
         | _ -> []
 
     let nextColour = colorFor <| fst model.nextShape

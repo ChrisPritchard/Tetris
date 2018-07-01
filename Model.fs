@@ -6,9 +6,10 @@ let scorePerLine = 100
 let scorePerLevel = 1000
 
 let timeBetweenCommands = 200.
+let timeBetweenLines = 1000.
 let minDropTime = 100.
 let levelAdjustOnDropTime = 100.
-let ticksForLinePause = 5
+
 let random = new System.Random ()
 
 type World = {
@@ -19,6 +20,7 @@ type World = {
 
     lastCommandTime: float
     lastDropTime: float
+    lastLineTime: float
     timeBetweenDrops: float
     linesToRemove: (Colour * int * int) list option
 
@@ -74,6 +76,7 @@ let startModel = {
 
     lastCommandTime = 0.
     lastDropTime = 0.
+    lastLineTime = 0.
     timeBetweenDrops = 500.
     linesToRemove = None
     
@@ -98,39 +101,42 @@ let plot (tlx, tly) =
 let isOutOfBounds blocks =
     blocks |> List.exists (fun (x,y) -> x < 0 || x >= width || y < 0 || y >= height)
 
-let isOverlapping world blocks =
+let isOverlapping blocks world =
     let worldBlocks = world.staticBlocks |> List.map (fun (_,x,y) -> x,y)
     List.except worldBlocks blocks <> blocks
 
-let processCommand world elapsed command =
-    match world.shape with
+let processCommand elapsed command world =
+    match command with
     | None -> world
-    | Some _ when elapsed - world.lastCommandTime < timeBetweenCommands -> world
-    | Some (colour, blocks) ->
-        let (x, y) = world.pos
-        let (nx, ny) = 
-            match command with
-            | Left -> (x - 1, y)
-            | Right -> (x + 1, y)
-            | Rotate -> (x, y)
-        
-        let newShape = blocks |> match command with | Rotate -> rotate | _ -> id
-        let newBlocks = plot (nx, ny) newShape
-        
-        if isOutOfBounds newBlocks || isOverlapping world newBlocks then 
-            world
-        else
-            let event = 
-                match command with
-                | Rotate -> Some Rotated
-                | Left | Right -> Some Moved
-            { world with 
-                shape = Some (colour, newShape)
-                pos = (nx, ny)
-                event = event
-                lastCommandTime = elapsed }
+    | Some c ->
+        match world.shape with
+        | None -> world
+        | Some _ when elapsed - world.lastCommandTime < timeBetweenCommands -> world
+        | Some (colour, blocks) ->
+            let (x, y) = world.pos
+            let (nx, ny) = 
+                match c with
+                | Left -> (x - 1, y)
+                | Right -> (x + 1, y)
+                | Rotate -> (x, y)
+            
+            let newShape = blocks |> match c with | Rotate -> rotate | _ -> id
+            let newBlocks = plot (nx, ny) newShape
+            
+            if isOutOfBounds newBlocks || isOverlapping newBlocks world then 
+                world
+            else
+                let event = 
+                    match c with
+                    | Rotate -> Some Rotated
+                    | Left | Right -> Some Moved
+                { world with 
+                    shape = Some (colour, newShape)
+                    pos = (nx, ny)
+                    event = event
+                    lastCommandTime = elapsed }
 
-let drop world elapsed isDropKeyPressed = 
+let drop elapsed isDropKeyPressed world = 
     match world.shape with
     | None -> world
     | Some _ when 
@@ -141,7 +147,7 @@ let drop world elapsed isDropKeyPressed =
         let newPos = (x, y + 1)
 
         let newBlocks = plot newPos blocks
-        if not (isOutOfBounds newBlocks) && not (isOverlapping world newBlocks) then 
+        if not (isOutOfBounds newBlocks) && not (isOverlapping newBlocks world) then 
             { world with pos = newPos; lastDropTime = elapsed }
         else    
             let currentBlocks = plot world.pos blocks |> List.map (fun (x,y) -> colour, x, y)
@@ -153,7 +159,7 @@ let nextShape world =
     | None ->
         let nextBlocks = snd world.nextShape |> plot startPos
         { world with
-            state = if isOverlapping world nextBlocks then GameOver else Playing
+            state = if isOverlapping nextBlocks world then GameOver else Playing
             pos = startPos
             shape = Some world.nextShape
             nextShape = randomShape () }
@@ -183,4 +189,21 @@ let removeLines world =
             staticBlocks = newBlocks
             score = newScore
             level = newLevel
+            linesToRemove = None
             timeBetweenDrops = newDropTime }
+
+let advanceGame elapsed command isDropPressed world =
+    if elapsed - world.lastLineTime < timeBetweenLines then 
+        world
+    else
+        let result =
+            world 
+            |> removeLines
+            |> nextShape
+            |> processCommand elapsed command
+            |> drop elapsed isDropPressed
+        let lines = getLines result
+        if List.isEmpty lines then result else 
+            { result with 
+                lastLineTime = elapsed
+                linesToRemove = Some lines }
