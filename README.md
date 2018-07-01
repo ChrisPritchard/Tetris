@@ -1,6 +1,6 @@
 # Tetris
 
-Classic tetris, implemented in F# with MonoGame and CoreRT. An exercise in functional programming and game solution design.
+Classic tetris, implemented in F# with MonoGame. An exercise in functional programming and game solution design.
 
 ## Supported platforms
 
