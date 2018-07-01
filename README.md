@@ -1,10 +1,10 @@
 # Tetris
 
-Classic tetris, implemented in F# with MonoGame. An exercise in functional programming and game solution design.
+Classic tetris, implemented in F# with MonoGame and CoreRT. An exercise in functional programming and game solution design.
 
 ## Supported platforms
 
-Being dotnet core 2.1, it should work on all platforms. Tested (and largely coded on) Windows 10.
+Being dotnet core 2.1, it should work on all platforms that supports (Windows, Linux, Mac). Tested (and largely coded on) Windows 10. A full list of dotnet core supported platforms can be found from here: <https://github.com/dotnet/core/blob/master/release-notes/2.1/2.1-supported-os.md>
 
 A note for mac users: part of the compilation of this game involves building the content, done using a MonoGame content builder referenced via Nuget. On OSX, this component does not work with just dotnet core. I have managed to get it going by doing the following:
 
@@ -14,7 +14,7 @@ A note for mac users: part of the compilation of this game involves building the
 
 After the build succeeded, a sudo dotnet run started the game without issue.
 
-## Acknoledgements
+## Acknowledgements
 
 The game and code is Unilicense, but I have used two sets of external resources:
 
@@ -25,7 +25,7 @@ Unfortunately I got this sound set a long time ago (five plus years) and can't f
 
 ## Guide to components
 
-The five code files in this project are described below, in decreasing game importance:
+The five code files in this project are described below, in decreasing game importance. Aside from code, there is also the Content folder which contains images, sounds, fonts etc and the Content.mgcb file, which MonoGame uses to compile assets into the game exe. This compilation is triggered by a line in the Tetris.fsproj file (MonoGameContentReference Include="**\*.mgcb") and done by the builder referenced as a nuget package (MonoGame.Content.Builder). Should be automatic on build (though sometimes you need to build twice).
 
 ### Model.fs
 
