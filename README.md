@@ -2,6 +2,8 @@
 
 Classic tetris, implemented in F# with MonoGame. An exercise in functional programming and game solution design.
 
+![Screenshot][screenshot.png]
+
 ## Supported platforms
 
 Being dotnet core 2.1, it should work on all platforms that supports (Windows, Linux, Mac). Tested (and largely coded on) Windows 10. A full list of dotnet core supported platforms can be found from here: <https://github.com/dotnet/core/blob/master/release-notes/2.1/2.1-supported-os.md>
