@@ -16,6 +16,9 @@ let eventMap =
     | Rotated -> "rotate"
     | Dropped -> "drop"
     | Line -> "line"
+    | LevelUp -> "levelUp"
+    | Blocked -> "blocked"
+    | GameOver -> "gameOver"
 
 let advanceGame (runState: RunState) gameModel = 
     match gameModel with
@@ -23,7 +26,7 @@ let advanceGame (runState: RunState) gameModel =
         Some startModel
     | Some _ when runState.WasJustPressed Keys.Escape -> 
         None
-    | Some m when m.state = GameOver -> 
+    | Some m when m.event = Some GameOver -> 
         gameModel
     | Some m ->
         let command = List.map keyMap runState.keyboard.pressed |> List.tryPick id

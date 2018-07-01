@@ -3,7 +3,7 @@ module Model
 let width, height = 10, 20
 let startPos = (width / 2 - 1, 0)
 let scorePerLine = 100
-let scorePerLevel = 1000
+let scorePerLevel = 200
 
 let timeBetweenCommands = 200.
 let timeBetweenLines = 1000.
@@ -14,8 +14,6 @@ let levelAdjustOnDropTime = 100.
 let random = new System.Random ()
 
 type World = {
-    state: State
-
     score: int
     level: int
 
@@ -30,10 +28,9 @@ type World = {
     nextShape: Colour * ShapeBlock list list
     event: Event option
 } 
-and State = | Playing | GameOver
 and ShapeBlock = | X | O
 and Colour = | Red | Magenta | Yellow | Cyan | Blue | Silver | Green
-and Event = | Moved | Rotated | Dropped | Line
+and Event = | Moved | Rotated | Blocked | Dropped | Line | LevelUp | GameOver
 and Command = | Left | Right | Rotate
 
 let shapes = [
@@ -69,8 +66,6 @@ let shapes = [
 let randomShape () = shapes.[random.Next(shapes.Length)]
 
 let startModel = {
-    state = Playing
-
     score = 0
     level = 0
 
@@ -123,7 +118,7 @@ let processCommand elapsed command world =
             let newBlocks = plot (nx, ny) newShape
             
             if isOutOfBounds newBlocks || isOverlapping newBlocks world then 
-                world
+                { world with event = Some Blocked }
             else
                 let event = 
                     match c with
@@ -149,7 +144,7 @@ let drop elapsed isDropKeyPressed world =
 
         let newBlocks = plot newPos blocks
         if not (isOutOfBounds newBlocks) && not (isOverlapping newBlocks world) then 
-            { world with pos = newPos; lastDropTime = elapsed }
+            { world with pos = newPos; lastDropTime = elapsed; event = Some Dropped }
         else    
             let currentBlocks = plot world.pos blocks |> List.map (fun (x,y) -> colour, x, y)
             { world with staticBlocks = world.staticBlocks @ currentBlocks; shape = None }
@@ -159,8 +154,9 @@ let nextShape world =
     | Some _ -> world
     | None ->
         let nextBlocks = snd world.nextShape |> plot startPos
+        let isGameOver = isOverlapping nextBlocks world
         { world with
-            state = if isOverlapping nextBlocks world then GameOver else Playing
+            event = if isGameOver then Some GameOver else world.event
             pos = startPos
             shape = Some world.nextShape
             nextShape = randomShape () }
@@ -171,7 +167,7 @@ let getLines world =
         |> List.filter (fun r -> List.length (snd r) = width)
         |> List.collect snd 
 
-let removeLines world = 
+let removeLines elapsed world = 
     match world.linesToRemove with
     | None -> world
     | Some lines ->
@@ -189,6 +185,9 @@ let removeLines world =
             staticBlocks = newBlocks
             score = newScore
             level = newLevel
+            event = if newLevel <> world.level then Some LevelUp else None
+            lastDropTime = elapsed
+            lastCommandTime = elapsed
             linesToRemove = None }
 
 let advanceGame elapsed command isDropPressed world =
@@ -197,12 +196,13 @@ let advanceGame elapsed command isDropPressed world =
     else
         let result =
             { world with event = None } 
-            |> removeLines
+            |> removeLines elapsed
             |> nextShape
             |> processCommand elapsed command
             |> drop elapsed isDropPressed
         let lines = getLines result
         if List.isEmpty lines then result else 
             { result with 
+                event = Some Line
                 lastLineTime = elapsed
                 linesToRemove = Some lines }
