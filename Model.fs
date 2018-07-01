@@ -7,6 +7,7 @@ let scorePerLevel = 1000
 
 let timeBetweenCommands = 200.
 let timeBetweenLines = 1000.
+let timeBetweenDrops = 1000.
 let minDropTime = 100.
 let levelAdjustOnDropTime = 100.
 
@@ -21,7 +22,6 @@ type World = {
     lastCommandTime: float
     lastDropTime: float
     lastLineTime: float
-    timeBetweenDrops: float
     linesToRemove: (Colour * int * int) list option
 
     staticBlocks: (Colour * int * int) list
@@ -72,12 +72,11 @@ let startModel = {
     state = Playing
 
     score = 0
-    level = 1
+    level = 0
 
     lastCommandTime = 0.
     lastDropTime = 0.
     lastLineTime = 0.
-    timeBetweenDrops = 500.
     linesToRemove = None
     
     staticBlocks = []
@@ -140,7 +139,9 @@ let drop elapsed isDropKeyPressed world =
     match world.shape with
     | None -> world
     | Some _ when 
-        let timeBetweenDrops = if isDropKeyPressed then world.timeBetweenDrops / 2. else world.timeBetweenDrops 
+        let timeBetweenDrops = 
+            if isDropKeyPressed then minDropTime 
+            else timeBetweenDrops - (float world.level * levelAdjustOnDropTime) |> max minDropTime
         elapsed - world.lastDropTime < timeBetweenDrops -> world
     | Some (colour, blocks) ->
         let (x, y) = world.pos
@@ -175,7 +176,7 @@ let removeLines world =
     | None -> world
     | Some lines ->
         let newScore = List.length lines / width * scorePerLine |> (+) world.score
-        let newLevel = float newScore / float scorePerLevel |> floor |> int |> (+) 1
+        let newLevel = float newScore / float scorePerLevel |> floor |> int
         
         let horizontals = lines |> List.map  (fun (_,_,y) -> y) |> List.distinct
         let newBlocks = 
@@ -183,14 +184,12 @@ let removeLines world =
             |> List.map (fun (c, x, y) -> 
                 let adjust = y::horizontals |> List.sortByDescending id |> List.findIndex ((=) y)
                 c, x, (y + adjust))
-        let newDropTime = world.timeBetweenDrops - (float newLevel * levelAdjustOnDropTime) |> max minDropTime
 
         { world with 
             staticBlocks = newBlocks
             score = newScore
             level = newLevel
-            linesToRemove = None
-            timeBetweenDrops = newDropTime }
+            linesToRemove = None }
 
 let advanceGame elapsed command isDropPressed world =
     if elapsed - world.lastLineTime < timeBetweenLines then 
