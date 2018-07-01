@@ -2,7 +2,7 @@
 
 Classic tetris, implemented in F# with MonoGame. An exercise in functional programming and game solution design.
 
-<img align="center" alt="screenshot" src="./screenshot.PNG" />
+![screenshot](./screenshot.PNG)
 
 ## Supported platforms
 
