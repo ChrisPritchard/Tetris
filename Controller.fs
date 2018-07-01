@@ -16,7 +16,7 @@ let advanceGame (runState: RunState) gameModel =
         Some startModel
     | Some _ when runState.WasJustPressed Keys.Escape -> 
         None
-    | Some m when m.event = Some GameOver -> 
+    | Some m when List.contains GameOver m.events -> 
         gameModel
     | Some m ->
         let command = List.map keyMap runState.keyboard.pressed |> List.tryPick id

@@ -26,7 +26,7 @@ type World = {
     pos: int * int
     shape: (Colour * ShapeBlock list list) option
     nextShape: Colour * ShapeBlock list list
-    event: Event option
+    events: Event list
 } 
 and ShapeBlock = | X | O
 and Colour = | Red | Magenta | Yellow | Cyan | Blue | Silver | Green
@@ -78,7 +78,7 @@ let startModel = {
     pos = startPos
     shape = randomShape () |> Some
     nextShape = randomShape ()
-    event = None
+    events = []
 }
 
 let rec rotate = function
@@ -118,16 +118,16 @@ let processCommand elapsed command world =
             let newBlocks = plot (nx, ny) newShape
             
             if isOutOfBounds newBlocks || isOverlapping newBlocks world then 
-                { world with event = Some Blocked }
+                { world with events = Blocked::world.events }
             else
                 let event = 
                     match c with
-                    | Rotate -> Some Rotated
-                    | Left | Right -> Some Moved
+                    | Rotate -> Rotated
+                    | Left | Right -> Moved
                 { world with 
                     shape = Some (colour, newShape)
                     pos = (nx, ny)
-                    event = event
+                    events = event::world.events
                     lastCommandTime = elapsed }
 
 let drop elapsed isDropKeyPressed world = 
@@ -144,7 +144,7 @@ let drop elapsed isDropKeyPressed world =
 
         let newBlocks = plot newPos blocks
         if not (isOutOfBounds newBlocks) && not (isOverlapping newBlocks world) then 
-            { world with pos = newPos; lastDropTime = elapsed; event = Some Dropped }
+            { world with pos = newPos; lastDropTime = elapsed; events = Dropped::world.events }
         else    
             let currentBlocks = plot world.pos blocks |> List.map (fun (x,y) -> colour, x, y)
             { world with staticBlocks = world.staticBlocks @ currentBlocks; shape = None }
@@ -156,7 +156,7 @@ let nextShape world =
         let nextBlocks = snd world.nextShape |> plot startPos
         let isGameOver = isOverlapping nextBlocks world
         { world with
-            event = if isGameOver then Some GameOver else world.event
+            events = if isGameOver then [GameOver] else world.events
             pos = startPos
             shape = Some world.nextShape
             nextShape = randomShape () }
@@ -185,17 +185,17 @@ let removeLines elapsed world =
             staticBlocks = newBlocks
             score = newScore
             level = newLevel
-            event = if newLevel <> world.level then Some LevelUp else None
+            events = if newLevel <> world.level then LevelUp::world.events else world.events
             lastDropTime = elapsed
             lastCommandTime = elapsed
             linesToRemove = None }
 
 let advanceGame elapsed command isDropPressed world =
     if elapsed - world.lastLineTime < timeBetweenLines then 
-        { world with event = None }
+        { world with events = [] }
     else
         let result =
-            { world with event = None } 
+            { world with events = [] } 
             |> removeLines elapsed
             |> nextShape
             |> processCommand elapsed command
@@ -203,6 +203,6 @@ let advanceGame elapsed command isDropPressed world =
         let lines = getLines result
         if List.isEmpty lines then result else 
             { result with 
-                event = Some Line
+                events = Line::world.events
                 lastLineTime = elapsed
                 linesToRemove = Some lines }
