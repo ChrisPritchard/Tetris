@@ -16,6 +16,7 @@ let random = new System.Random ()
 type World = {
     score: int
     level: int
+    isGameOver: bool
 
     lastCommandTime: float
     lastDropTime: float
@@ -68,6 +69,7 @@ let randomShape () = shapes.[random.Next(shapes.Length)]
 let startModel = {
     score = 0
     level = 0
+    isGameOver = false
 
     lastCommandTime = 0.
     lastDropTime = 0.
@@ -157,6 +159,7 @@ let nextShape world =
         let isGameOver = isOverlapping nextBlocks world
         { world with
             events = if isGameOver then [GameOver] else world.events
+            isGameOver = isGameOver
             pos = startPos
             shape = Some world.nextShape
             nextShape = randomShape () }
