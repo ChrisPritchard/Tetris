@@ -51,7 +51,6 @@ type RunState = {
     elapsed: float
     keyboard: KeyboardInfo
     mouse: MouseInfo
-    playSound: string -> unit
 } and KeyboardInfo = {
     pressed: Keys list;
     keysDown: Keys list;
@@ -74,7 +73,7 @@ type GameLoop<'TModel> (resolution, assetsToLoad, updateModel, getView)
 
     let mutable keyboardInfo = { pressed = []; keysDown = []; keysUp = [] }
     let mutable currentModel: 'TModel option = None
-    let mutable currentView: Drawable list = []
+    let mutable currentView: Drawable list * string list = [],[]
 
     let mutable spriteBatch = Unchecked.defaultof<SpriteBatch>
 
@@ -163,7 +162,6 @@ type GameLoop<'TModel> (resolution, assetsToLoad, updateModel, getView)
             elapsed = gameTime.TotalGameTime.TotalMilliseconds 
             keyboard = keyboardInfo
             mouse = mouseInfo
-            playSound = playSound
         }
         
         currentModel <- updateModel runState currentModel
@@ -177,12 +175,13 @@ type GameLoop<'TModel> (resolution, assetsToLoad, updateModel, getView)
         
         spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp)
 
-        currentView
+        fst currentView
             |> List.iter (fun drawable -> 
                 match drawable with 
                 | Image i -> drawImage spriteBatch i Color.White
                 | ColouredImage (c,i) -> drawImage spriteBatch i c
                 | Text t -> drawText spriteBatch t Color.Black
                 | ColouredText (c,t) -> drawText spriteBatch t c)
+        snd currentView |> List.iter playSound
 
         spriteBatch.End()

@@ -36,6 +36,16 @@ let lx, ly = sx, sy + 60
 // Instruction text
 let ix, iy = rw / 2, gy + gh + 30
 
+let eventSoundMap =
+    function
+    | Moved -> "move"
+    | Rotated -> "rotate"
+    | Dropped -> "drop"
+    | Line -> "line"
+    | LevelUp -> "levelUp"
+    | Blocked -> "blocked"
+    | GameOver -> "gameOver"
+
 let colorFor colour = 
     match colour with
     | Red -> Color.Red | Magenta -> Color.Magenta | Yellow -> Color.Yellow 
@@ -94,4 +104,7 @@ let getView _ (model: World) =
         Text { baseText with scale = 0.4; text = "up to rotate, down to drop"; position = (ix, iy + textHeight + textHeight) }
     ]
 
-    gameSpace @ nextBlockSpace @ staticBlocks @ currentShape @ nextShape @ text
+    gameSpace @ nextBlockSpace @ staticBlocks @ currentShape @ nextShape @ text,
+    match model.event with
+    | Some e -> [eventSoundMap e]
+    | _ -> []

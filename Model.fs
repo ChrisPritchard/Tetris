@@ -3,7 +3,7 @@ module Model
 let width, height = 10, 20
 let startPos = (width / 2 - 1, 0)
 let scorePerLine = 100
-let scorePerLevel = 200
+let scorePerLevel = 1000
 
 let timeBetweenCommands = 200.
 let timeBetweenLines = 1000.
