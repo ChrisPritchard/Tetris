@@ -26,6 +26,8 @@ let bw, bh = 25, 25
 let gx, gy, gw, gh = 10, 10, 250, 500
 // Next block space
 let nx, ny, nw, nh = 270, 10, 120, 70
+// Game over space
+let gameOverSpace = 20, 200, 360, 100
 
 let textScale = 0.5
 let textHeight = 20
@@ -35,6 +37,8 @@ let sx, sy = nx + (nw / 2), ny + nh + 20
 let lx, ly = sx, sy + 60
 // Instruction text
 let ix, iy = rw / 2, gy + gh + 30
+// Game over text
+let gox, goy = 200, 230
 
 let eventSoundMap =
     function
@@ -104,6 +108,13 @@ let getView _ (model: World) =
         Text { baseText with scale = 0.4; text = "up to rotate, down to drop"; position = (ix, iy + textHeight + textHeight) }
     ]
 
+    let gameOver = 
+        if model.isGameOver then [
+            ColouredImage (Color.Black, { assetKey = "blank"; destRect = gameOverSpace; sourceRect = None })
+            ColouredText (Color.White, { baseText with scale = 0.7; text = "Game Over!"; position = (gox, goy) })
+            ColouredText (Color.White, { baseText with text = "Press R to restart"; position = (gox, goy + textHeight + textHeight) })
+        ] else []
+
     let sounds = model.events |> List.map (eventSoundMap >> SoundEffect)
 
-    gameSpace @ nextBlockSpace @ staticBlocks @ currentShape @ nextShape @ text @ sounds
+    gameSpace @ nextBlockSpace @ staticBlocks @ currentShape @ nextShape @ text @ gameOver @ sounds
