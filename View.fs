@@ -11,13 +11,13 @@ let assetsToLoad = [
     Texture { key = "blank"; path = "Content/white" }
     Texture { key = "block"; path = "Content/block" }
     Font { key = "default"; path = "Content/coders_crux" }
-    Sound { key = "blocked"; path = "Content/Sounds/Blocked" }
-    Sound { key = "drop"; path = "Content/Sounds/Drop" }
-    Sound { key = "gameOver"; path = "Content/Sounds/GameOver" }
-    Sound { key = "levelUp"; path = "Content/Sounds/LevelUp" }
-    Sound { key = "line"; path = "Content/Sounds/Line" }
-    Sound { key = "move"; path = "Content/Sounds/Move" }
-    Sound { key = "rotate"; path = "Content/Sounds/Rotate" }
+    Sound { key = "blocked"; path = "Content/Sounds/Blocked.wav" }
+    Sound { key = "drop"; path = "Content/Sounds/Drop.wav" }
+    Sound { key = "gameOver"; path = "Content/Sounds/GameOver.wav" }
+    Sound { key = "levelUp"; path = "Content/Sounds/LevelUp.wav" }
+    Sound { key = "line"; path = "Content/Sounds/Line.wav" }
+    Sound { key = "move"; path = "Content/Sounds/Move.wav" }
+    Sound { key = "rotate"; path = "Content/Sounds/Rotate.wav" }
 ]
 
 // Block size

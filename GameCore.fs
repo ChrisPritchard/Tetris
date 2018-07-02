@@ -1,9 +1,10 @@
 ﻿module GameCore
 
+open System
+open System.IO
 open Microsoft.Xna.Framework
 open Microsoft.Xna.Framework.Graphics;
 open Microsoft.Xna.Framework.Input;
-open System
 open Microsoft.Xna.Framework.Audio
 
 type KeyPath = {
@@ -153,7 +154,9 @@ type GameLoop<'TModel> (resolution, assetsToLoad, updateModel, getView)
                 function
                 | Texture info -> info.key, this.Content.Load<Texture2D>(info.path) |> TextureAsset
                 | Font info -> info.key, this.Content.Load<SpriteFont>(info.path) |> FontAsset
-                | Sound info -> info.key, this.Content.Load<SoundEffect>(info.path) |> SoundAsset)
+                | Sound info -> 
+                    use stream = File.OpenRead(info.path)
+                    info.key, SoundEffect.FromStream(stream) |> SoundAsset)
             |> Map.ofList
 
     override __.Update(gameTime) =

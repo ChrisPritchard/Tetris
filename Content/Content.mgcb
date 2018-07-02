@@ -32,48 +32,6 @@
 /processorParam:TextureFormat=Compressed
 /build:coders_crux.spritefont
 
-#begin Sounds/Blocked.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/Blocked.wav
-
-#begin Sounds/Drop.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/Drop.wav
-
-#begin Sounds/GameOver.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/GameOver.wav
-
-#begin Sounds/LevelUp.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/LevelUp.wav
-
-#begin Sounds/Line.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/Line.wav
-
-#begin Sounds/Move.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/Move.wav
-
-#begin Sounds/Rotate.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/Rotate.wav
-
 #begin white.png
 /importer:TextureImporter
 /processor:TextureProcessor

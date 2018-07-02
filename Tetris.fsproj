@@ -11,14 +11,17 @@
     <None Include="Content\coders_crux.ttf" />
     <None Include="Content\Content.mgcb" />
     <None Include="Content\white.png" />
-    <None Include="Content\Sounds\Blocked.wav" />
-    <None Include="Content\Sounds\Drop.wav" />
-    <None Include="Content\Sounds\GameOver.wav" />
-    <None Include="Content\Sounds\LevelUp.wav" />
-    <None Include="Content\Sounds\Line.wav" />
-    <None Include="Content\Sounds\Move.wav" />
-    <None Include="Content\Sounds\Rotate.wav" />
     <MonoGameContentReference Include="**\*.mgcb" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Content\Sounds\Blocked.wav" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Content\Sounds\Drop.wav" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Content\Sounds\GameOver.wav" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Content\Sounds\LevelUp.wav" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Content\Sounds\Line.wav" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Content\Sounds\Move.wav" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Content\Sounds\Rotate.wav" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
