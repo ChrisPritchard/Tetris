@@ -52,3 +52,13 @@ GameCore is where all the MonoGame stuff is kept, and is basically the MonoGame.
 ### Program.fs
 
 This instantiates the GameLoop, passing through the methods and types from the other files, and handles disposal
+
+## CoreRT
+
+There is a branch of this project called corert, that has CoreRT enabled. This has been tested to build on Windows, if you have the necessary requisites installed. Feel free to try it, but for support on getting it to build on Windows or Linux/OSX you will need to seek help at the [CoreRT site](https://github.com/dotnet/corert).
+
+## Note on development sequence
+
+This project was the first developed after __Battleship__ [here](https://github.com/ChrisPritchard/Battleship).
+
+The next project developed after this, and using the lessons learned, was __MiniKnight__ [here](https://github.com/ChrisPritchard/MiniKnight).
