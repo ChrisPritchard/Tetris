@@ -52,3 +52,9 @@ GameCore is where all the MonoGame stuff is kept, and is basically the MonoGame.
 ### Program.fs
 
 This instantiates the GameLoop, passing through the methods and types from the other files, and handles disposal
+
+## Note on development sequence
+
+This project was the first developed after __Battleship__ [here](https://github.com/ChrisPritchard/Battleship).
+
+The next project developed after this, and using the lessons learned, was __MiniKnight__ [here](https://github.com/ChrisPritchard/MiniKnight).
